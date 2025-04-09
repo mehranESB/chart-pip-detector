@@ -2,10 +2,10 @@ from pipdet.pipgen import generate_pip
 from pathlib import Path
 
 # Path to the CSV file containing the market OHLCV data
-csv_path = Path("./DATA/csv/EURUSD-1h.csv")
+csv_path = Path("./DATA/csv/EURUSD-15m.csv")
 
 # Path where the generated PIP data will be saved (in .pkl format)
-save_path = Path("./DATA/pip/EURUSD-1h.pkl")
+save_path = Path("./DATA/pip/EURUSD-15m.pkl")
 save_path.parent.mkdir(parents=True, exist_ok=True)
 
 # Generate the PIP points and distances

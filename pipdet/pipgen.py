@@ -106,6 +106,7 @@ def generate_pip(
     # Pack the results into a dictionary
     packed_data = {
         "df_source": df_source,
+        "pip_results": pip_results,
         "seq_len": seq_len,
         "norm_width": norm_width,
         "norm_height": norm_height,
