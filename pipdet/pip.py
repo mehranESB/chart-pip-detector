@@ -3,6 +3,87 @@ import numpy as np
 import time
 
 
+def distance_to_segment(point, p1, p2, mode="perpendicular"):
+    """
+    Compute the distance of a point from a line segment.
+
+    Parameters:
+    - point: A tuple (x, high, low) representing the coordinates of the point.
+    - p1: A tuple (x1, y1) representing the start of the line segment.
+    - p2: A tuple (x2, y2) representing the end of the line segment.
+    - mode: Either "perpendicular" or "vertical", indicating the type of distance to compute.
+
+    Returns:
+    - distance: The calculated distance from the point to the segment.
+    - LenChange: The change in segment length if the point is added to the segment.
+    - coord: The coordinate of the point on the segment (either high or low).
+    """
+    x, high, low = point  # Coordinates of the data point
+    x1, y1 = p1  # Start of the segment
+    x2, y2 = p2  # End of the segment
+
+    # Calculate the vector for the segment and its squared length
+    dx, dy = (x2 - x1), (y2 - y1)
+    seg_len2 = dx**2 + dy**2  # Squared length of the segment
+
+    # Handle zero-length segment case (p1 and p2 must be distinct)
+    if seg_len2 == 0:
+        raise ValueError(
+            "The segment length is equal to zero. p1 and p2 must be distinct."
+        )
+
+    # Vectors connecting the point to the segment endpoints and their squared lengths
+    dx_left, dy_left_hi, dy_left_lo = (x - x1), (high - y1), (low - y1)
+    left_len_hi2 = dx_left**2 + dy_left_hi**2  # Length squared to high value
+    left_len_lo2 = dx_left**2 + dy_left_lo**2  # Length squared to low value
+
+    if mode == "perpendicular":
+        # Perpendicular squared distances from high/low to the segment
+        pp_dist_hi2 = left_len_hi2 - (dx_left * dx + dy_left_hi * dy) ** 2 / seg_len2
+        pp_dist_lo2 = left_len_lo2 - (dx_left * dx + dy_left_lo * dy) ** 2 / seg_len2
+        dist_hi = np.sqrt(np.abs(pp_dist_hi2))
+        dist_lo = np.sqrt(np.abs(pp_dist_lo2))
+
+    elif mode == "vertical":
+        # Vertical distances (absolute difference from projected y)
+        alpha = dy / dx
+        beta = y1 - alpha * x1
+        y_interp = alpha * x + beta
+        dist_hi = np.abs(high - y_interp)
+        dist_lo = np.abs(low - y_interp)
+
+    else:
+        raise ValueError("Invalid mode. Use 'perpendicular' or 'vertical'.")
+
+    # Determine which value (high or low) has the greater distance
+    if dist_hi > dist_lo:  # High value dominates
+        dx_right, dy_right_hi = (x2 - x), (y2 - high)
+        right_len_hi2 = dx_right**2 + dy_right_hi**2
+
+        distance = dist_hi
+        LenChange = (np.sqrt(left_len_hi2) + np.sqrt(right_len_hi2)) - np.sqrt(seg_len2)
+
+        # Flag for high value
+        y = high
+        hilo = 1.0
+
+    else:  # Low value dominates
+        dx_right, dy_right_lo = (x2 - x), (y2 - low)
+        right_len_lo2 = dx_right**2 + dy_right_lo**2
+
+        distance = dist_lo
+        LenChange = (np.sqrt(left_len_lo2) + np.sqrt(right_len_lo2)) - np.sqrt(seg_len2)
+
+        # Flag for low value
+        y = low
+        hilo = 0.0
+
+    coord = np.array([x, y])  # Coordinate of the point on the segment
+
+    # Return the distance, length change, and the point's coordinates (high or low)
+    return distance, LenChange, coord, hilo
+
+
 class FastPip:
     def __init__(
         self,
@@ -279,84 +360,3 @@ class FastPip:
             raise ValueError(
                 f"Unsupported dtype: '{dtype}'. Choose from 'dict', 'data', or 'df'."
             )
-
-
-def distance_to_segment(point, p1, p2, mode="perpendicular"):
-    """
-    Compute the distance of a point from a line segment.
-
-    Parameters:
-    - point: A tuple (x, high, low) representing the coordinates of the point.
-    - p1: A tuple (x1, y1) representing the start of the line segment.
-    - p2: A tuple (x2, y2) representing the end of the line segment.
-    - mode: Either "perpendicular" or "vertical", indicating the type of distance to compute.
-
-    Returns:
-    - distance: The calculated distance from the point to the segment.
-    - LenChange: The change in segment length if the point is added to the segment.
-    - coord: The coordinate of the point on the segment (either high or low).
-    """
-    x, high, low = point  # Coordinates of the data point
-    x1, y1 = p1  # Start of the segment
-    x2, y2 = p2  # End of the segment
-
-    # Calculate the vector for the segment and its squared length
-    dx, dy = (x2 - x1), (y2 - y1)
-    seg_len2 = dx**2 + dy**2  # Squared length of the segment
-
-    # Handle zero-length segment case (p1 and p2 must be distinct)
-    if seg_len2 == 0:
-        raise ValueError(
-            "The segment length is equal to zero. p1 and p2 must be distinct."
-        )
-
-    # Vectors connecting the point to the segment endpoints and their squared lengths
-    dx_left, dy_left_hi, dy_left_lo = (x - x1), (high - y1), (low - y1)
-    left_len_hi2 = dx_left**2 + dy_left_hi**2  # Length squared to high value
-    left_len_lo2 = dx_left**2 + dy_left_lo**2  # Length squared to low value
-
-    if mode == "perpendicular":
-        # Perpendicular squared distances from high/low to the segment
-        pp_dist_hi2 = left_len_hi2 - (dx_left * dx + dy_left_hi * dy) ** 2 / seg_len2
-        pp_dist_lo2 = left_len_lo2 - (dx_left * dx + dy_left_lo * dy) ** 2 / seg_len2
-        dist_hi = np.sqrt(np.abs(pp_dist_hi2))
-        dist_lo = np.sqrt(np.abs(pp_dist_lo2))
-
-    elif mode == "vertical":
-        # Vertical distances (absolute difference from projected y)
-        alpha = dy / dx
-        beta = y1 - alpha * x1
-        y_interp = alpha * x + beta
-        dist_hi = np.abs(high - y_interp)
-        dist_lo = np.abs(low - y_interp)
-
-    else:
-        raise ValueError("Invalid mode. Use 'perpendicular' or 'vertical'.")
-
-    # Determine which value (high or low) has the greater distance
-    if dist_hi > dist_lo:  # High value dominates
-        dx_right, dy_right_hi = (x2 - x), (y2 - high)
-        right_len_hi2 = dx_right**2 + dy_right_hi**2
-
-        distance = dist_hi
-        LenChange = (np.sqrt(left_len_hi2) + np.sqrt(right_len_hi2)) - np.sqrt(seg_len2)
-
-        # Flag for high value
-        y = high
-        hilo = 1.0
-
-    else:  # Low value dominates
-        dx_right, dy_right_lo = (x2 - x), (y2 - low)
-        right_len_lo2 = dx_right**2 + dy_right_lo**2
-
-        distance = dist_lo
-        LenChange = (np.sqrt(left_len_lo2) + np.sqrt(right_len_lo2)) - np.sqrt(seg_len2)
-
-        # Flag for low value
-        y = low
-        hilo = 0.0
-
-    coord = np.array([x, y])  # Coordinate of the point on the segment
-
-    # Return the distance, length change, and the point's coordinates (high or low)
-    return distance, LenChange, coord, hilo
