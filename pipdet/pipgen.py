@@ -1,5 +1,5 @@
 from .pip import FastPip
-from .utils import tight_box_normalize
+from .utils import tight_box_normalize_df
 from chartDL.utils import csv as csv_utils
 from chartDL.dataset import SingleDataset
 import numpy as np
@@ -89,19 +89,19 @@ def generate_pip(
         data = dataset[idx]
 
         # Normalize the data and convert into dataframe
-        normalized_data = tight_box_normalize(
+        normalized_data = tight_box_normalize_df(
             data, width=norm_width, height=norm_height
-        ).to_dataframe()
+        )
 
         # Initialize FastPip for detecting PIPs
         fast_pip = FastPip(normalized_data, dist_method=dist_method)
 
         # Find PIP points and retrieve their associated data
-        pip_data = fast_pip.find_pips(time_it=False, dtype="dict")
+        pip_data = fast_pip.find_pips(time_it=False, dtype="df")
 
         # store results
         for ii, key in enumerate(pip_info_to_save):
-            pip_results[ii, :, i] = pip_data[key].reshape(-1)
+            pip_results[ii, :, i] = pip_data[key].to_numpy()
 
     # Pack the results into a dictionary
     packed_data = {
