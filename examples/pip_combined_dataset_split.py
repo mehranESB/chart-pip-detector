@@ -14,7 +14,6 @@ dataset2 = PipDataset(pkl_path2)  # Load the second PipDataset
 combined_dataset = CombinedDataset([dataset1, dataset2])
 
 # Split the combined dataset into training (80%), validation (15%), and testing (5%)
-# Assumes the `split` method of CombinedDataset is implemented
 train_ds, valid_ds, test_ds = combined_dataset.split(0.8, 0.15)
 
 # Example output to verify splits

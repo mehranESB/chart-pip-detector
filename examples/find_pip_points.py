@@ -1,6 +1,8 @@
 from pipdet.pip import FastPip
 from chartDL.utils.csv import import_ohlcv_from_csv
 from pathlib import Path
+import numpy as np
+
 
 # Import source DataFrame
 csv_source_path = Path("./DATA/csv/EURUSD-1h.csv")
@@ -13,10 +15,12 @@ df_source = import_ohlcv_from_csv(
 )
 
 # get ohlcv sample data and normalize them
-market_data = df_source.loc[:127, ["Open", "High", "Low", "Close"]].copy()
+data_len = 128
+market_data = df_source.loc[:data_len, ["Open", "High", "Low", "Close"]].copy()
 low_min = market_data["Low"].min()
 high_max = market_data["High"].max()
 market_data = (market_data - low_min) / (high_max - low_min)
+market_data["X"] = np.linspace(0, 1, data_len)
 
 # initialize pip finder and find pip points
 pip_finder = FastPip(market_data, dist_method="perpendicular", num_points=10)
